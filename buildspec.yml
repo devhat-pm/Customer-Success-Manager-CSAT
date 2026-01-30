@@ -15,7 +15,7 @@ phases:
       - echo Building Backend Docker image...
       - docker build -t $BACKEND_REPO:latest -t $BACKEND_REPO:$IMAGE_TAG ./backend
       - echo Building Frontend Docker image...
-      - docker build -t $FRONTEND_REPO:latest -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
+      - docker build --build-arg VITE_API_URL=/api/v1 -t $FRONTEND_REPO:latest -t $FRONTEND_REPO:$IMAGE_TAG ./frontend
   post_build:
     commands:
       - echo Build completed on `date`

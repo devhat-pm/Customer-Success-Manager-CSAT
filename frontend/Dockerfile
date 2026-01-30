@@ -1,7 +1,7 @@
 # Frontend Dockerfile - Multi-stage build
 
 # Stage 1: Build
-FROM node:18-alpine AS build
+FROM public.ecr.aws/docker/library/node:18-alpine AS build
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ ENV VITE_APP_NAME=$VITE_APP_NAME
 RUN npm run build
 
 # Stage 2: Serve with nginx
-FROM nginx:alpine
+FROM public.ecr.aws/docker/library/nginx:alpine
 
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
