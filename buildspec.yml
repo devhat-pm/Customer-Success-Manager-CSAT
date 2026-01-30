@@ -24,9 +24,11 @@ phases:
       - docker push $BACKEND_REPO:$IMAGE_TAG
       - docker push $FRONTEND_REPO:latest
       - docker push $FRONTEND_REPO:$IMAGE_TAG
-      - echo Writing image definitions file...
-      - printf '[{"name":"csm-backend","imageUri":"%s"},{"name":"csm-frontend","imageUri":"%s"}]' $BACKEND_REPO:$IMAGE_TAG $FRONTEND_REPO:$IMAGE_TAG > imagedefinitions.json
+      - echo Writing image definitions files...
+      - printf '[{"name":"csm-backend","imageUri":"%s"}]' $BACKEND_REPO:$IMAGE_TAG > backend-imagedefinitions.json
+      - printf '[{"name":"csm-frontend","imageUri":"%s"}]' $FRONTEND_REPO:$IMAGE_TAG > frontend-imagedefinitions.json
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - backend-imagedefinitions.json
+    - frontend-imagedefinitions.json
