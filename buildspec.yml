@@ -15,17 +15,17 @@ phases:
       - echo Building Backend Docker image...
       - docker build -t $BACKEND_REPO:latest -t $BACKEND_REPO:$IMAGE_TAG ./backend
       - echo Building Frontend Docker image...
-      - docker build --build-arg VITE_API_URL=/api/v1 -t $FRONTEND_REPO:latest -t $FRONTEND_REPO:$IMAGE_TAG ./frontend || echo "Frontend build failed, continuing..."
+      - docker build --build-arg VITE_API_URL=/api/v1 -t $FRONTEND_REPO:latest -t $FRONTEND_REPO:$IMAGE_TAG ./frontend 2>&1
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing Docker images...
       - docker push $BACKEND_REPO:latest
       - docker push $BACKEND_REPO:$IMAGE_TAG
-      - docker push $FRONTEND_REPO:latest || echo "Frontend push skipped"
-      - docker push $FRONTEND_REPO:$IMAGE_TAG || echo "Frontend push skipped"
+      - docker push $FRONTEND_REPO:latest
+      - docker push $FRONTEND_REPO:$IMAGE_TAG
       - echo Writing image definitions file...
-      - printf '[{"name":"csm-backend","imageUri":"%s"}]' $BACKEND_REPO:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"csm-backend","imageUri":"%s"},{"name":"csm-frontend","imageUri":"%s"}]' $BACKEND_REPO:$IMAGE_TAG $FRONTEND_REPO:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:

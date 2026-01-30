@@ -1,15 +1,18 @@
 # Frontend Dockerfile - Multi-stage build
 
 # Stage 1: Build
-FROM public.ecr.aws/docker/library/node:18-alpine AS build
+FROM public.ecr.aws/docker/library/node:18-slim AS build
 
 WORKDIR /app
+
+# Increase Node memory limit for build
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .
