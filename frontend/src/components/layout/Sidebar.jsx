@@ -125,8 +125,8 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
           !isMobile && collapsed ? 'w-0 opacity-0' : 'w-full opacity-100'
         )}>
           <img
-            src="/logo.svg"
-            alt="Success Manager"
+            src="/extravis-logo.png"
+            alt="Extravis"
             className="h-8 w-auto"
           />
         </div>
@@ -134,8 +134,8 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
         {!isMobile && collapsed && (
           <div className="flex items-center justify-center flex-shrink-0 mx-auto">
             <img
-              src="/logo.svg"
-              alt="Success Manager"
+              src="/extravis-logo.png"
+              alt="Extravis"
               className="h-7 w-auto"
             />
           </div>

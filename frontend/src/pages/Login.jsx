@@ -95,8 +95,8 @@ export default function Login() {
           <div>
             <div className="flex items-center gap-3">
               <img
-                src="/logo.svg"
-                alt="Success Manager"
+                src="/extravis-logo.png"
+                alt="Extravis"
                 className="h-10 w-auto brightness-0 invert"
               />
             </div>
@@ -145,8 +145,8 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
             <img
-              src="/logo.svg"
-              alt="Success Manager"
+              src="/extravis-logo.png"
+              alt="Extravis"
               className="h-10 w-auto"
             />
           </div>
