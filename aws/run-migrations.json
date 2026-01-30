@@ -1,0 +1,21 @@
+{
+  "cluster": "csm-cluster",
+  "taskDefinition": "csm-backend:3",
+  "count": 1,
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["subnet-0e8d32cc9649246fe"],
+      "securityGroups": ["sg-0df38f134d366c5d8"],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "overrides": {
+    "containerOverrides": [
+      {
+        "name": "csm-backend",
+        "command": ["python", "-m", "alembic", "upgrade", "head"]
+      }
+    ]
+  }
+}
