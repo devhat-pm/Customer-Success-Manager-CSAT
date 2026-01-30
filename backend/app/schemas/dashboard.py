@@ -36,6 +36,7 @@ class HealthBucket(BaseModel):
 
 
 class HealthDistribution(BaseModel):
+    average_score: float = 0
     excellent: HealthBucket
     good: HealthBucket
     at_risk: HealthBucket

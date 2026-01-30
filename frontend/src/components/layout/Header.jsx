@@ -57,15 +57,26 @@ export default function Header({ sidebarCollapsed, onMenuClick, onSearchClick })
   const { data: alertsData } = useQuery({
     queryKey: ['header-notifications'],
     queryFn: async () => {
-      const res = await alertsAPI.getAll({ status: 'active', limit: 5 })
-      return res.data?.items || res.data || []
+      try {
+        const res = await alertsAPI.getAll({ status: 'active', limit: 5 })
+        // Handle different response formats
+        const data = res.data
+        if (Array.isArray(data)) return data
+        if (data?.items && Array.isArray(data.items)) return data.items
+        if (data?.alerts && Array.isArray(data.alerts)) return data.alerts
+        return []
+      } catch (err) {
+        console.error('Failed to fetch notifications:', err)
+        return []
+      }
     },
     refetchInterval: 60000, // Refresh every minute
     staleTime: 30000,
   })
 
-  // Transform alerts to notifications format
-  const notifications = (alertsData || []).map(alert => ({
+  // Transform alerts to notifications format - ensure alertsData is an array
+  const alertsList = Array.isArray(alertsData) ? alertsData : []
+  const notifications = alertsList.map(alert => ({
     id: alert.id,
     title: alert.severity === 'critical' ? 'Critical Alert' :
            alert.severity === 'high' ? 'High Priority' :

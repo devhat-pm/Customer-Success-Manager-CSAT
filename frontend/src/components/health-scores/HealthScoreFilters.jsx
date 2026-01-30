@@ -25,17 +25,11 @@ export function HealthScoreFilters({ filters, onFiltersChange, onClear, collapse
     queryFn: () => usersAPI.getAll({ role: 'csm', limit: 100 }).then(res => res.data),
   })
 
-  // Fetch products (from deployments or a products endpoint)
-  const { data: productsData } = useQuery({
-    queryKey: ['products-list'],
-    queryFn: () => customersAPI.getAll({ limit: 1 }).then(res => {
-      // This would ideally come from a products endpoint
-      return ['SupportX Core', 'SupportX Pro', 'SupportX Enterprise', 'Add-on: Analytics', 'Add-on: AI Assistant']
-    }),
-  })
+  // Product options matching backend ProductName enum
+  const productsData = ['MonetX', 'SupportX', 'GreenX']
 
   const accountManagers = usersData?.users || []
-  const products = productsData || []
+  const products = productsData
 
   // Update local filters when props change
   useEffect(() => {

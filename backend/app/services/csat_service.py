@@ -44,11 +44,54 @@ class CSATService:
         self.db = db
         self._token_secret = settings.SECRET_KEY
 
-    def get_by_id(self, survey_id: UUID) -> CSATSurvey:
+    def get_by_id(self, survey_id: UUID) -> Dict[str, Any]:
         survey = self.db.query(CSATSurvey).filter(CSATSurvey.id == survey_id).first()
         if not survey:
             raise NotFoundError(detail="Survey not found")
-        return survey
+        return self._enrich_survey(survey)
+
+    def _enrich_survey(self, survey: CSATSurvey) -> Dict[str, Any]:
+        """Add customer name, product name, and other display fields to survey."""
+        result = {
+            "id": survey.id,
+            "customer_id": survey.customer_id,
+            "product_deployment_id": survey.product_deployment_id,
+            "survey_type": survey.survey_type,
+            "score": survey.score,
+            "feedback_text": survey.feedback_text,
+            "submitted_by_name": survey.submitted_by_name,
+            "submitted_by_email": survey.submitted_by_email,
+            "submitted_at": survey.submitted_at,
+            "ticket_reference": survey.ticket_reference,
+            "linked_ticket_id": survey.linked_ticket_id,
+            "survey_request_id": survey.survey_request_id,
+            "submitted_by_customer_user_id": survey.submitted_by_customer_user_id,
+            "submitted_anonymously": survey.submitted_anonymously,
+            "submitted_via": survey.submitted_via,
+            "entered_by_staff_id": survey.entered_by_staff_id,
+            # Additional display fields for frontend
+            "customer_name": None,
+            "product": None,
+            "feedback": survey.feedback_text,
+            "submitted_by": survey.submitted_by_name,
+            "respondent_email": survey.submitted_by_email,
+        }
+
+        # Get customer name
+        if survey.customer_id:
+            customer = self.db.query(Customer).filter(Customer.id == survey.customer_id).first()
+            if customer:
+                result["customer_name"] = customer.company_name
+
+        # Get product name
+        if survey.product_deployment_id:
+            deployment = self.db.query(ProductDeployment).filter(
+                ProductDeployment.id == survey.product_deployment_id
+            ).first()
+            if deployment:
+                result["product"] = deployment.product_name.value
+
+        return result
 
     def get_all(
         self,
@@ -61,7 +104,7 @@ class CSATService:
         end_date: Optional[date] = None,
         sort_by: str = "submitted_at",
         sort_order: str = "desc"
-    ) -> Tuple[List[CSATSurvey], int]:
+    ) -> Tuple[List[Dict[str, Any]], int]:
         query = self.db.query(CSATSurvey)
 
         if customer_id:
@@ -88,7 +131,10 @@ class CSATService:
             query = query.order_by(desc(sort_column))
 
         surveys = query.offset(skip).limit(limit).all()
-        return surveys, total
+
+        # Enrich surveys with display names
+        enriched_surveys = [self._enrich_survey(survey) for survey in surveys]
+        return enriched_surveys, total
 
     def create(self, survey_data: CSATSurveyCreate) -> CSATSurvey:
         # Verify customer exists
@@ -286,23 +332,69 @@ class CSATService:
         if not surveys:
             return {
                 "total_responses": 0,
-                "overall_average": None,
-                "overall_nps": None,
-                "by_product": {},
+                "avg_csat": None,
+                "csat_trend": 0,
+                "nps_score": None,
+                "nps_trend": 0,
+                "promoters_pct": 0,
+                "passives_pct": 0,
+                "detractors_pct": 0,
+                "promoters_count": 0,
+                "passives_count": 0,
+                "detractors_count": 0,
+                "last_month_responses": 0,
+                "response_rate": 0,
+                "by_product": [],
                 "by_survey_type": {},
                 "monthly_trend": [],
                 "top_themes": {"positive": [], "negative": []}
             }
 
-        # Overall averages
+        # Overall CSAT averages (non-NPS surveys)
         csat_surveys = [s for s in surveys if s.survey_type != SurveyType.nps]
-        overall_avg = sum(s.score for s in csat_surveys) / len(csat_surveys) if csat_surveys else None
+        avg_csat = sum(s.score for s in csat_surveys) / len(csat_surveys) if csat_surveys else None
 
+        # Calculate CSAT trend (current month vs last month)
+        now = datetime.utcnow()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+
+        current_month_csat = [s for s in csat_surveys if s.submitted_at >= current_month_start]
+        last_month_csat = [s for s in csat_surveys if last_month_start <= s.submitted_at < current_month_start]
+
+        current_avg = sum(s.score for s in current_month_csat) / len(current_month_csat) if current_month_csat else 0
+        last_avg = sum(s.score for s in last_month_csat) / len(last_month_csat) if last_month_csat else 0
+        csat_trend = round(current_avg - last_avg, 2) if current_month_csat and last_month_csat else 0
+
+        # NPS calculations
         nps_surveys = [s for s in surveys if s.survey_type == SurveyType.nps]
         overall_nps = self._calculate_nps(nps_surveys)
 
-        # By product
-        by_product = {}
+        # NPS breakdown counts
+        promoters_count = len([s for s in nps_surveys if s.score >= 9])  # 9-10
+        passives_count = len([s for s in nps_surveys if 7 <= s.score <= 8])  # 7-8
+        detractors_count = len([s for s in nps_surveys if s.score <= 6])  # 0-6
+        total_nps = len(nps_surveys)
+
+        promoters_pct = round((promoters_count / total_nps) * 100, 1) if total_nps > 0 else 0
+        passives_pct = round((passives_count / total_nps) * 100, 1) if total_nps > 0 else 0
+        detractors_pct = round((detractors_count / total_nps) * 100, 1) if total_nps > 0 else 0
+
+        # NPS trend
+        current_month_nps = [s for s in nps_surveys if s.submitted_at >= current_month_start]
+        last_month_nps = [s for s in nps_surveys if last_month_start <= s.submitted_at < current_month_start]
+        current_nps = self._calculate_nps(current_month_nps) or 0
+        last_nps = self._calculate_nps(last_month_nps) or 0
+        nps_trend = current_nps - last_nps if current_month_nps and last_month_nps else 0
+
+        # Last month responses count
+        last_month_responses = len([s for s in surveys if last_month_start <= s.submitted_at < current_month_start])
+
+        # Response rate (completed surveys / total survey requests - simplified as 100% for manual entries)
+        response_rate = 100  # This would require survey_requests table to calculate properly
+
+        # By product - transform to array format for frontend
+        by_product_dict = {}
         for survey in surveys:
             if survey.product_deployment_id:
                 deployment = self.db.query(ProductDeployment).filter(
@@ -310,16 +402,41 @@ class CSATService:
                 ).first()
                 if deployment:
                     product = deployment.product_name.value
-                    if product not in by_product:
-                        by_product[product] = {"scores": [], "count": 0}
-                    by_product[product]["scores"].append(survey.score)
-                    by_product[product]["count"] += 1
+                    if product not in by_product_dict:
+                        by_product_dict[product] = {
+                            "scores": [],
+                            "distribution": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                            "recent_feedback": []
+                        }
+                    by_product_dict[product]["scores"].append(survey.score)
+                    if survey.survey_type != SurveyType.nps and 1 <= survey.score <= 5:
+                        by_product_dict[product]["distribution"][survey.score] += 1
+                    if survey.feedback_text:
+                        customer = self.db.query(Customer).filter(
+                            Customer.id == survey.customer_id
+                        ).first()
+                        by_product_dict[product]["recent_feedback"].append({
+                            "customer_name": customer.company_name if customer else "Unknown",
+                            "score": survey.score,
+                            "comment": survey.feedback_text,
+                            "submitted_at": survey.submitted_at.isoformat()
+                        })
 
-        for product in by_product:
-            by_product[product]["average"] = round(
-                sum(by_product[product]["scores"]) / len(by_product[product]["scores"]), 2
-            )
-            del by_product[product]["scores"]
+        # Transform to array with calculated fields
+        by_product = []
+        for product_name, data in by_product_dict.items():
+            scores = data["scores"]
+            avg_score = sum(scores) / len(scores) if scores else 0
+            # Sort recent feedback by date and take latest 5
+            recent = sorted(data["recent_feedback"], key=lambda x: x["submitted_at"], reverse=True)[:5]
+            by_product.append({
+                "product": product_name,
+                "avg_score": round(avg_score, 2),
+                "response_count": len(scores),
+                "trend": 0,  # Would need historical data to calculate
+                "distribution": data["distribution"],
+                "recent_feedback": recent
+            })
 
         # By survey type
         by_type = {}
@@ -342,8 +459,18 @@ class CSATService:
 
         return {
             "total_responses": len(surveys),
-            "overall_average": round(overall_avg, 2) if overall_avg else None,
-            "overall_nps": overall_nps,
+            "avg_csat": round(avg_csat, 2) if avg_csat else None,
+            "csat_trend": csat_trend,
+            "nps_score": overall_nps,
+            "nps_trend": nps_trend,
+            "promoters_pct": promoters_pct,
+            "passives_pct": passives_pct,
+            "detractors_pct": detractors_pct,
+            "promoters_count": promoters_count,
+            "passives_count": passives_count,
+            "detractors_count": detractors_count,
+            "last_month_responses": last_month_responses,
+            "response_rate": response_rate,
             "by_product": by_product,
             "by_survey_type": by_type,
             "monthly_trend": monthly_trend,

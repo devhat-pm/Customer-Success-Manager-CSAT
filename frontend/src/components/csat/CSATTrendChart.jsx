@@ -48,11 +48,29 @@ export function CSATTrendChart({ data, isLoading, onFilterChange }) {
   }
 
   // Format data for chart
-  const chartData = (data || []).map((item) => ({
-    date: item.date ? format(parseISO(item.date), 'MMM yyyy') : item.month || '',
-    score: item.avg_score || item.score || 0,
-    responses: item.response_count || item.responses || 0,
-  }))
+  const chartData = (data || []).map((item) => {
+    // Handle month format "YYYY-MM" from backend
+    let dateLabel = ''
+    if (item.month) {
+      try {
+        // Add day to make it a valid ISO date
+        dateLabel = format(parseISO(`${item.month}-01`), 'MMM yyyy')
+      } catch {
+        dateLabel = item.month
+      }
+    } else if (item.date) {
+      try {
+        dateLabel = format(parseISO(item.date), 'MMM yyyy')
+      } catch {
+        dateLabel = item.date
+      }
+    }
+    return {
+      date: dateLabel,
+      score: item.average_score || item.avg_score || item.score || 0,
+      responses: item.response_count || item.responses || 0,
+    }
+  })
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

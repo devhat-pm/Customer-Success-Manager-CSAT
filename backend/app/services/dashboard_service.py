@@ -85,7 +85,7 @@ class DashboardService:
             promoters = sum(1 for s in nps_surveys if s.score >= 9)
             detractors = sum(1 for s in nps_surveys if s.score <= 6)
             total_nps = len(nps_surveys)
-            nps_score = int(((promoters - detractors) / total_nps) * 100) if total_nps > 0 else None
+            nps_score = round(((promoters - detractors) / total_nps) * 100) if total_nps > 0 else None
 
         # Alert counts
         open_alerts = self.db.query(Alert).filter(
@@ -130,6 +130,11 @@ class DashboardService:
 
         total = len(latest_scores)
 
+        # Calculate average score
+        average_score = 0
+        if total > 0:
+            average_score = round(sum(s.overall_score for s in latest_scores) / total, 1)
+
         # Count by bucket
         excellent = sum(1 for s in latest_scores if s.overall_score >= 80)
         good = sum(1 for s in latest_scores if 60 <= s.overall_score < 80)
@@ -140,6 +145,7 @@ class DashboardService:
             return round((count / total * 100), 1) if total > 0 else 0
 
         return {
+            "average_score": average_score,
             "excellent": {
                 "min": 80,
                 "max": 100,

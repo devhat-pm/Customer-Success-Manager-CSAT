@@ -55,6 +55,12 @@ class CSATSurveyResponse(BaseModel):
     submitted_anonymously: bool = False
     submitted_via: SubmissionVia = SubmissionVia.manual_entry
     entered_by_staff_id: Optional[UUID] = None
+    # Additional fields for frontend display
+    customer_name: Optional[str] = None
+    product: Optional[str] = None
+    feedback: Optional[str] = None
+    submitted_by: Optional[str] = None
+    respondent_email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -115,14 +121,33 @@ class ThemesAnalysis(BaseModel):
     negative: List[ThemeItem]
 
 
+class ProductAnalytics(BaseModel):
+    product: str
+    avg_score: float
+    response_count: int
+    trend: float = 0
+    distribution: Dict[int, int] = {}
+    recent_feedback: List[Dict[str, Any]] = []
+
+
 class CSATAnalyticsResponse(BaseModel):
     total_responses: int
-    overall_average: Optional[float] = None
-    overall_nps: Optional[int] = None
-    by_product: Dict[str, ProductScore]
-    by_survey_type: Dict[str, SurveyTypeStats]
-    monthly_trend: List[ScoreTrendItem]
-    top_themes: ThemesAnalysis
+    avg_csat: Optional[float] = None
+    csat_trend: float = 0
+    nps_score: Optional[int] = None
+    nps_trend: int = 0
+    promoters_pct: float = 0
+    passives_pct: float = 0
+    detractors_pct: float = 0
+    promoters_count: int = 0
+    passives_count: int = 0
+    detractors_count: int = 0
+    last_month_responses: int = 0
+    response_rate: float = 0
+    by_product: List[ProductAnalytics] = []
+    by_survey_type: Dict[str, SurveyTypeStats] = {}
+    monthly_trend: List[ScoreTrendItem] = []
+    top_themes: ThemesAnalysis = ThemesAnalysis(positive=[], negative=[])
 
 
 # ==================== Survey Link Schemas (Legacy) ====================

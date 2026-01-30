@@ -10,9 +10,9 @@ import {
 } from 'lucide-react'
 
 const productColors = {
-  'SupportX Core': { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary' },
-  'SupportX Pro': { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary' },
-  'SupportX Enterprise': { bg: 'bg-accent/10', text: 'text-accent', border: 'border-accent' },
+  'MonetX': { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary' },
+  'SupportX': { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary' },
+  'GreenX': { bg: 'bg-success/10', text: 'text-success', border: 'border-success' },
   default: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-300' },
 }
 

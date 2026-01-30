@@ -402,6 +402,19 @@ export const ticketsAPI = {
 
   checkSlaBreaches: () =>
     api.post('/tickets/check-sla-breaches'),
+
+  // Comments
+  getWithComments: (id) =>
+    api.get(`/tickets/${id}/detail`),
+
+  getComments: (id, includeInternal = true) =>
+    api.get(`/tickets/${id}/comments`, { params: { include_internal: includeInternal } }),
+
+  addComment: (id, data) =>
+    api.post(`/tickets/${id}/comments`, data),
+
+  addInternalNote: (id, data) =>
+    api.post(`/tickets/${id}/internal-note`, data),
 }
 
 // Activities API

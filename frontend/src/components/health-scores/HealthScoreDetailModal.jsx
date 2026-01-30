@@ -51,11 +51,11 @@ const statusConfig = {
 }
 
 const factorConfig = {
-  usage_score: { label: 'Usage', icon: Activity, description: 'Product usage and adoption' },
-  engagement_score: { label: 'Engagement', icon: Users, description: 'User activity and interactions' },
-  csat_score: { label: 'CSAT', icon: Star, description: 'Customer satisfaction ratings' },
-  support_score: { label: 'Support', icon: MessageSquare, description: 'Support ticket trends' },
-  adoption_score: { label: 'Adoption', icon: Zap, description: 'Feature adoption rate' },
+  product_adoption_score: { label: 'Product Adoption', icon: Zap, description: 'Feature adoption and usage rate (15%)' },
+  support_health_score: { label: 'Support Health', icon: MessageSquare, description: 'Support ticket trends and satisfaction (25%)' },
+  engagement_score: { label: 'Engagement', icon: Users, description: 'User activity and interactions (20%)' },
+  financial_health_score: { label: 'Financial Health', icon: Activity, description: 'Contract value and payment trends (20%)' },
+  sla_compliance_score: { label: 'SLA Compliance', icon: Star, description: 'SLA adherence and performance (20%)' },
 }
 
 export function HealthScoreDetailModal({ open, onClose, customer }) {
@@ -76,12 +76,13 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
   const history = healthData?.health_scores || healthData?.history || []
 
   // Map customer's health score factors from backend fields
-  const scoreFactors = customer.score_factors || customer.latest_health_score ? {
-    usage_score: customer.latest_health_score?.engagement_score || customer.score_factors?.usage_score || 0,
-    engagement_score: customer.latest_health_score?.adoption_score || customer.score_factors?.engagement_score || 0,
-    csat_score: customer.latest_health_score?.support_score || customer.score_factors?.csat_score || 0,
-    support_score: customer.latest_health_score?.financial_score || customer.score_factors?.support_score || 0,
-    adoption_score: customer.latest_health_score?.adoption_score || customer.score_factors?.adoption_score || 0,
+  const latestScore = customer.latest_health_score
+  const scoreFactors = latestScore ? {
+    product_adoption_score: latestScore.product_adoption_score || latestScore.adoption_score || 0,
+    support_health_score: latestScore.support_health_score || latestScore.support_score || 0,
+    engagement_score: latestScore.engagement_score || 0,
+    financial_health_score: latestScore.financial_health_score || latestScore.financial_score || 0,
+    sla_compliance_score: latestScore.sla_compliance_score || 0,
   } : null
 
   // Prepare chart data
@@ -91,9 +92,9 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
     .map((h) => ({
       date: h.calculated_at ? format(parseISO(h.calculated_at), 'MMM d') : '',
       score: h.overall_score,
-      usage: h.factors?.usage_score,
-      engagement: h.factors?.engagement_score,
-      csat: h.factors?.csat_score,
+      adoption: h.product_adoption_score || h.factors?.product_adoption_score,
+      engagement: h.engagement_score || h.factors?.engagement_score,
+      support: h.support_health_score || h.factors?.support_health_score,
     }))
 
   const daysUntilRenewal = customer.contract_end_date
@@ -352,10 +353,10 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm text-slate-600">
-                    {(scoreFactors?.usage_score || 0) < 60 && (
+                    {(scoreFactors?.product_adoption_score || 0) < 60 && (
                       <li className="flex items-start gap-2">
                         <ChevronRight className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                        Schedule a product training session to improve usage adoption
+                        Schedule a product training session to improve adoption rate
                       </li>
                     )}
                     {(scoreFactors?.engagement_score || 0) < 60 && (
@@ -364,10 +365,22 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                         Increase touchpoints with key stakeholders
                       </li>
                     )}
-                    {(scoreFactors?.csat_score || 0) < 60 && (
+                    {(scoreFactors?.support_health_score || 0) < 60 && (
                       <li className="flex items-start gap-2">
                         <ChevronRight className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
                         Review recent support tickets and address pain points
+                      </li>
+                    )}
+                    {(scoreFactors?.financial_health_score || 0) < 60 && (
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                        Review contract terms and upsell opportunities
+                      </li>
+                    )}
+                    {(scoreFactors?.sla_compliance_score || 0) < 60 && (
+                      <li className="flex items-start gap-2">
+                        <ChevronRight className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                        Improve response times and SLA compliance
                       </li>
                     )}
                     {score < 60 && (
@@ -427,12 +440,12 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                           />
                           <Line
                             type="monotone"
-                            dataKey="usage"
+                            dataKey="adoption"
                             stroke="#2196F3"
                             strokeWidth={1}
                             strokeDasharray="5 5"
                             dot={false}
-                            name="Usage"
+                            name="Adoption"
                           />
                           <Line
                             type="monotone"
@@ -445,12 +458,12 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                           />
                           <Line
                             type="monotone"
-                            dataKey="csat"
+                            dataKey="support"
                             stroke="#FF9800"
                             strokeWidth={1}
                             strokeDasharray="5 5"
                             dot={false}
-                            name="CSAT"
+                            name="Support"
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -471,9 +484,9 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                             <th className="text-left px-4 py-2 text-xs font-medium text-slate-500">Date</th>
                             <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Score</th>
                             <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Change</th>
-                            <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Usage</th>
+                            <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Adoption</th>
                             <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Engagement</th>
-                            <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">CSAT</th>
+                            <th className="text-center px-4 py-2 text-xs font-medium text-slate-500">Support</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -499,13 +512,13 @@ export function HealthScoreDetailModal({ open, onClose, customer }) {
                                   )}
                                 </td>
                                 <td className="px-4 py-2 text-center text-sm text-slate-600">
-                                  {h.factors?.usage_score || '-'}
+                                  {h.product_adoption_score || h.factors?.product_adoption_score || '-'}
                                 </td>
                                 <td className="px-4 py-2 text-center text-sm text-slate-600">
-                                  {h.factors?.engagement_score || '-'}
+                                  {h.engagement_score || h.factors?.engagement_score || '-'}
                                 </td>
                                 <td className="px-4 py-2 text-center text-sm text-slate-600">
-                                  {h.factors?.csat_score || '-'}
+                                  {h.support_health_score || h.factors?.support_health_score || '-'}
                                 </td>
                               </tr>
                             )
