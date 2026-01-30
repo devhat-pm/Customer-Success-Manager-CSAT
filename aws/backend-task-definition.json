@@ -15,7 +15,7 @@
         }
       ],
       "environment": [
-        {"name": "POSTGRES_HOST", "value": "PLACEHOLDER_DB_HOST"},
+        {"name": "POSTGRES_HOST", "value": "csm-postgres.ctiybfqnjvvv.us-east-1.rds.amazonaws.com"},
         {"name": "POSTGRES_PORT", "value": "5432"},
         {"name": "POSTGRES_USER", "value": "postgres"},
         {"name": "POSTGRES_PASSWORD", "value": "CsmDb2024Secure"},
