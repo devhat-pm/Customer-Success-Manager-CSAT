@@ -1,0 +1,61 @@
+{
+  "family": "csm-backend",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::537718391575:role/csm-ecs-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "csm-backend",
+      "image": "537718391575.dkr.ecr.us-east-1.amazonaws.com/csm-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {"name": "POSTGRES_HOST", "value": "PLACEHOLDER_DB_HOST"},
+        {"name": "POSTGRES_PORT", "value": "5432"},
+        {"name": "POSTGRES_USER", "value": "postgres"},
+        {"name": "POSTGRES_PASSWORD", "value": "CsmDb2024Secure"},
+        {"name": "POSTGRES_DB", "value": "success_manager"},
+        {"name": "SECRET_KEY", "value": "csm-production-secret-key-12345678901234567890123456789012"},
+        {"name": "REFRESH_SECRET_KEY", "value": "csm-production-refresh-secret-key-12345678901234567890"},
+        {"name": "ALGORITHM", "value": "HS256"},
+        {"name": "ACCESS_TOKEN_EXPIRE_MINUTES", "value": "480"},
+        {"name": "REFRESH_TOKEN_EXPIRE_DAYS", "value": "7"},
+        {"name": "BACKEND_CORS_ORIGINS", "value": "[\"*\"]"},
+        {"name": "DEBUG", "value": "false"},
+        {"name": "ENVIRONMENT", "value": "production"},
+        {"name": "SMTP_HOST", "value": "smtp.office365.com"},
+        {"name": "SMTP_PORT", "value": "587"},
+        {"name": "SMTP_USER", "value": "supportx@extravis.co"},
+        {"name": "SMTP_PASSWORD", "value": "Y!149214049419af"},
+        {"name": "SMTP_TLS", "value": "true"},
+        {"name": "SMTP_FROM_EMAIL", "value": "supportx@extravis.co"},
+        {"name": "EMAIL_FROM_ADDRESS", "value": "supportx@extravis.co"},
+        {"name": "EMAIL_FROM_NAME", "value": "Success Manager"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/csm-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "csm-build",
+  "description": "Build CSM Backend and Frontend Docker images",
+  "source": {
+    "type": "GITHUB",
+    "location": "https://github.com/devhat-pm/Customer-Success-Manager-CSAT.git",
+    "gitCloneDepth": 1,
+    "buildspec": "buildspec.yml",
+    "reportBuildStatus": true
+  },
+  "artifacts": {
+    "type": "NO_ARTIFACTS"
+  },
+  "environment": {
+    "type": "LINUX_CONTAINER",
+    "image": "aws/codebuild/amazonlinux2-x86_64-standard:4.0",
+    "computeType": "BUILD_GENERAL1_SMALL",
+    "privilegedMode": true,
+    "environmentVariables": [
+      {
+        "name": "AWS_DEFAULT_REGION",
+        "value": "us-east-1"
+      },
+      {
+        "name": "AWS_ACCOUNT_ID",
+        "value": "537718391575"
+      }
+    ]
+  },
+  "serviceRole": "arn:aws:iam::537718391575:role/csm-codebuild-role",
+  "timeoutInMinutes": 30,
+  "logsConfig": {
+    "cloudWatchLogs": {
+      "status": "ENABLED",
+      "groupName": "/codebuild/csm-build"
+    }
+  }
+}

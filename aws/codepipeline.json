@@ -1,0 +1,91 @@
+{
+  "pipeline": {
+    "name": "csm-pipeline",
+    "roleArn": "arn:aws:iam::537718391575:role/csm-codepipeline-role",
+    "artifactStore": {
+      "type": "S3",
+      "location": "csm-pipeline-artifacts-537718391575"
+    },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "Source",
+            "actionTypeId": {
+              "category": "Source",
+              "owner": "AWS",
+              "provider": "CodeStarSourceConnection",
+              "version": "1"
+            },
+            "configuration": {
+              "ConnectionArn": "arn:aws:codestar-connections:us-east-1:537718391575:connection/552e9272-8c5a-471f-ac48-537dc3920afb",
+              "FullRepositoryId": "devhat-pm/Customer-Success-Manager-CSAT",
+              "BranchName": "main",
+              "OutputArtifactFormat": "CODE_ZIP"
+            },
+            "outputArtifacts": [
+              {
+                "name": "SourceArtifact"
+              }
+            ],
+            "runOrder": 1
+          }
+        ]
+      },
+      {
+        "name": "Build",
+        "actions": [
+          {
+            "name": "Build",
+            "actionTypeId": {
+              "category": "Build",
+              "owner": "AWS",
+              "provider": "CodeBuild",
+              "version": "1"
+            },
+            "configuration": {
+              "ProjectName": "csm-build"
+            },
+            "inputArtifacts": [
+              {
+                "name": "SourceArtifact"
+              }
+            ],
+            "outputArtifacts": [
+              {
+                "name": "BuildArtifact"
+              }
+            ],
+            "runOrder": 1
+          }
+        ]
+      },
+      {
+        "name": "Deploy",
+        "actions": [
+          {
+            "name": "DeployBackend",
+            "actionTypeId": {
+              "category": "Deploy",
+              "owner": "AWS",
+              "provider": "ECS",
+              "version": "1"
+            },
+            "configuration": {
+              "ClusterName": "csm-cluster",
+              "ServiceName": "csm-backend-service",
+              "FileName": "imagedefinitions.json"
+            },
+            "inputArtifacts": [
+              {
+                "name": "BuildArtifact"
+              }
+            ],
+            "runOrder": 1
+          }
+        ]
+      }
+    ]
+  }
+}
